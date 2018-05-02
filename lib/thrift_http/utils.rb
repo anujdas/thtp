@@ -89,6 +89,30 @@ module ThriftHttp
     def serialize_stream(base_struct, out_stream, protocol)
       serialize(base_struct, Thrift::IOStreamTransport.new(nil, out_stream), protocol)
     end
+
+    # JSON serialisation
+
+    # Recursive object serialiser compatible with anything likely to appear
+    # in Thrift, in case ActiveSupport's #as_json monkeypatch is unavailable
+    def jsonify(obj)
+      return obj.as_json if obj.respond_to?(:as_json) # ActiveSupport shortcut
+
+      case obj
+      when nil, false, true, Numeric # directly representable as JSON
+        obj
+      when Hash
+        obj.each_with_object({}) { |(k, v), h| h[jsonify(k)] = jsonify(v) }
+      when Enumerable
+        obj.map { |v| jsonify(v) }
+      else
+        if obj.instance_variables.any?
+          obj.instance_variables.each_with_object({}) do |iv, h|
+            h[iv.to_s[1..-1].to_sym] = jsonify(obj.instance_variable_get(iv))
+          end
+        else
+          obj.to_s # lowest common denominator serialisation
+        end
+      end
     end
   end
 end

@@ -85,8 +85,8 @@ module ThriftHttp
 
   # Indicates that some Thrift struct failed cursory schema validation on the server
   class ServerValidationError < ServerError
-    def initialize(struct, validation_message)
-      super "#{struct.class}: #{validation_message}", Thrift::ApplicationException::UNKNOWN
+    def initialize(validation_message)
+      super validation_message, Thrift::ApplicationException::UNKNOWN
     end
   end
 
