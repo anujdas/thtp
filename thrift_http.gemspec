@@ -23,7 +23,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'httpclient', '~> 2.8'
-  spec.add_dependency 'mustermann', '~> 1.0'
   spec.add_dependency 'rack', '~> 2.0'
   spec.add_dependency 'thrift', '~> 0.9'
 

@@ -6,7 +6,6 @@ require 'thrift_http/encoding'
 require 'thrift_http/errors'
 require 'thrift_http/middleware_stack'
 require 'thrift_http/pub_sub'
-require 'thrift_http/routing'
 require 'thrift_http/status'
 require 'thrift_http/utils'
 
@@ -17,7 +16,6 @@ module ThriftHttp
     extend Forwardable
     extend SingleForwardable
 
-    include Routing
     include PubSub
     include Utils
 
@@ -37,10 +35,8 @@ module ThriftHttp
 
       def call(rack_env)
         request = Rack::Request.new(rack_env)
-        response = Rack::Response.new([], 404) # default response is not-found
-        if (route = match_route(request))
-          new(request, response, route.path_params).instance_eval(&route.handler)
-        end
+        response = Rack::Response.new
+        new(request, response).call
         response.finish
       end
 
@@ -55,23 +51,22 @@ module ThriftHttp
       end
     end
 
+    RPC_ROUTE = %r{^/(?<service_name>[^/]+)/(?<rpc>[^/]+)/?$}
+
     def_single_delegators :handler, :use
     def_instance_delegators :'self.class', :service, :handler, :publish
 
-    attr_reader :request, :response, :path_params
+    attr_reader :request, :response
 
-    def initialize(request, response, path_params = nil)
+    def initialize(request, response)
       @request = request # Rack::Request
       @response = response # Rack::Response
-      @path_params = path_params || {} # Hash<Symbol, String>: captures from path
     end
 
-    ### Routes
-
-    post '/:service_name/:rpc/?' do
+    def call
       start_time = get_time
       # extract path params and verify routing
-      service_name, rpc = path_params.values_at(:service_name, :rpc)
+      service_name, rpc = RPC_ROUTE.match(request.path_info)&.values_at(:service_name, :rpc)
       raise BadRequestError unless service_name == service_path(service)
       raise UnknownRpcError, rpc unless handler.respond_to?(rpc)
       # read, perform, write
@@ -92,12 +87,6 @@ module ThriftHttp
     rescue => e # a non-Thrift exception occurred; translate to Thrift as best we can
       write_error(InternalError.new(e))
       publish :internal_error, request: request, error: e, time: elapsed_ms(start_time)
-    end
-
-    get '/health/?' do
-      response.write 'Everything is OK'.freeze
-      response.headers[Rack::CONTENT_TYPE] = 'text/plain'.freeze
-      response.status = 200
     end
 
     private
