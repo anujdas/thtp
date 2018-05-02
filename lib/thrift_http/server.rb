@@ -7,6 +7,7 @@ require 'thrift_http/middleware_stack'
 require 'thrift_http/pub_sub'
 require 'thrift_http/status'
 require 'thrift_http/utils'
+require 'thrift_http/server/null_route'
 
 module ThriftHttp
   # An HTTP (Rack middleware) implementation of Thrift-RPC
@@ -18,9 +19,11 @@ module ThriftHttp
 
     attr_reader :service
 
+    # @param app [Object?] The Rack application underneath, if used as middleware
     # @param service [Thrift::Service] The service class handled by this server
     # @param handlers [Object,Array<Object>] The object(s) handling RPC requests
-    def initialize(service:, handlers: [])
+    def initialize(app = NullRoute.new, service:, handlers: [])
+      @app = app
       @service = service
       @handler = MiddlewareStack.new(service, handlers)
     end
@@ -34,11 +37,11 @@ module ThriftHttp
     def call(rack_env)
       start_time = get_time
       request = Rack::Request.new(rack_env)
-      # default to CompactProtocol because we need a protocol with which to send back errors
-      protocol = Encoding.protocol(request.media_type) || Thrift::CompactProtocol
       # extract path params and verify routing
       service_name, rpc = RPC_ROUTE.match(request.path_info)&.values_at(:service_name, :rpc)
-      raise BadRequestError unless request.post? && service_name == service_path(service)
+      return @app.call(rack_env) unless request.post? && service_name == service_path(service)
+      # default to CompactProtocol because we need a protocol with which to send back errors
+      protocol = Encoding.protocol(request.media_type) || Thrift::CompactProtocol
       raise UnknownRpcError, rpc unless @handler.respond_to?(rpc)
       # read, perform, write
       args = read_args(request.body, rpc, protocol)
