@@ -109,27 +109,28 @@ module ThriftHttp
         args_struct.public_send("#{field[:name]}=", val)
       end
       # serialise and return bytestring
-      serialize(args_struct, self.class.protocol)
+      serialize_buffer(args_struct, self.class.protocol)
     end
 
     def read_reply(rpc, reply, protocol)
+      result_struct = result_class(service, rpc).new
       # deserialise reply into result struct
-      result = deserialize(result_class(service, rpc).new, reply, protocol)
+      deserialize_buffer(reply, result_struct, protocol)
       # results have at most one field set; find it and return/raise it
-      result.struct_fields.each_value do |field|
-        reply = result.public_send(field[:name])
+      result_struct.struct_fields.each_value do |field|
+        reply = result_struct.public_send(field[:name])
         next if reply.nil? # this isn't the set field, keep looking
         return reply if field[:name] == SUCCESS_FIELD # 'success' is special and means no worries
         raise reply # any other set field must be an exception
       end
       # if no field is set and there's no `success` field, the RPC returned `void``
-      return nil unless result.respond_to?(:success)
+      return nil unless result_struct.respond_to?(:success)
       # otherwise, we don't recognise the response (our schema is out of date, or it's invalid)
       raise BadResponseError, rpc
     end
 
     def read_exception(exception, protocol)
-      raise deserialize(Thrift::ApplicationException.new, exception, protocol)
+      raise deserialize_buffer(exception, Thrift::ApplicationException.new, protocol)
     end
   end
 end

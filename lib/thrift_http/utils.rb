@@ -33,20 +33,36 @@ module ThriftHttp
       service.const_get("#{rpc.capitalize}_result")
     end
 
-    def serialize(struct, protocol)
-      transport = Thrift::MemoryBufferTransport.new
-      struct.write(protocol.new(transport)) # write to output transport, an in-memory byte buffer
-      transport.read(transport.available) # return serialised thrift
+    def deserialize(transport, struct, protocol)
+      struct.read(protocol.new(transport)) # read off the stream into Thrift objects
+      struct # return input object with all fields filled out
+    rescue Thrift::ProtocolException, EOFError => e
+      raise DeserializationError, e
+    end
+
+    def deserialize_buffer(buffer, struct, protocol)
+      deserialize(Thrift::MemoryBufferTransport.new(buffer), struct, protocol)
+    end
+
+    def deserialize_stream(in_stream, struct, protocol)
+      deserialize(Thrift::IOStreamTransport.new(in_stream, nil), struct, protocol)
+    end
+
+    def serialize(struct, transport, protocol)
+      struct.write(protocol.new(transport))
+      transport.tap(&:flush)
     rescue Thrift::ProtocolException, EOFError => e
       raise SerializationError, e
     end
 
-    def deserialize(struct, buffer, protocol)
-      transport = Thrift::MemoryBufferTransport.new(buffer)
-      struct.read(protocol.new(transport)) # read off the buffer into Thrift objects
-      struct # return input object with all fields filled out
-    rescue Thrift::ProtocolException, EOFError => e
-      raise DeserializationError, e
+    def serialize_buffer(struct, protocol)
+      transport = Thrift::MemoryBufferTransport.new
+      serialize(struct, transport, protocol) # write to output transport, an in-memory buffer
+      transport.read(transport.available) # return serialised thrift
+    end
+
+    def serialize_stream(struct, out_stream, protocol)
+      serialize(struct, Thrift::IOStreamTransport.new(nil, out_stream), protocol)
     end
   end
 end

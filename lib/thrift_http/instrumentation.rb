@@ -1,13 +1,16 @@
+# frozen_string_literal: true
+
 require 'thrift_http/utils'
 
 module ThriftHttp
   module Instrumentation
-    INBOUND_RPC_STAT = 'rpc.incoming'.freeze
-    OUTBOUND_RPC_STAT = 'rpc.incoming'.freeze
+    INBOUND_RPC_STAT = 'rpc.incoming'
+    OUTBOUND_RPC_STAT = 'rpc.incoming'
 
-    SUCCESS_TAG = 'rpc.status:success'.freeze # everything is ok
-    EXCEPTION_TAG = 'rpc.status:exception'.freeze # schema-defined (expected) exception
-    ERROR_TAG = 'rpc.status:error'.freeze # unexpected error
+    SUCCESS_TAG = 'rpc.status:success' # everything is ok
+    EXCEPTION_TAG = 'rpc.status:exception' # schema-defined (expected) exception
+    ERROR_TAG = 'rpc.status:error' # unexpected error
+    INTERNAL_ERROR_TAG = 'rpc.status:internal_error'
 
     # Automagic instrumentation for all outbound RPCs as a ThriftHttp::Client middleware
     class ClientMetrics
@@ -86,7 +89,7 @@ module ThriftHttp
       # @param error [Exception] The to-be-serialized exception
       # @param time [Integer] Milliseconds of execution wall time
       def internal_error(request:, error:, time:)
-        tags = [INERNAL_ERROR_TAG, "rpc.error:#{error.class.name.underscore}"]
+        tags = [INTERNAL_ERROR_TAG, "rpc.error:#{error.class.name.underscore}"]
         @statsd.timing(INBOUND_RPC_STAT, time, tags: tags)
       end
     end
@@ -161,7 +164,7 @@ module ThriftHttp
         @logger.error :server do
           {
             http: request_to_hash(request),
-            internal_error: exception_to_hash(error, true),
+            internal_error: exception_to_hash(error, backtrace: true),
             elapsed_ms: time,
           }
         end
