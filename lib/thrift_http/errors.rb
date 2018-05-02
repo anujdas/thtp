@@ -123,9 +123,5 @@ module ThriftHttp
   end
 
   # Indicates that some Thrift struct failed cursory schema validation on the client
-  class ClientValidationError < ClientError
-    def initialize(struct, validation_message)
-      super "#{struct.class}: #{validation_message}"
-    end
-  end
+  class ClientValidationError < ClientError; end
 end
