@@ -1,13 +1,13 @@
 require 'rack'
 require 'thrift'
 
-require 'thrift_http/encoding'
-require 'thrift_http/errors'
-require 'thrift_http/status'
-require 'thrift_http/utils'
+require 'thtp/encoding'
+require 'thtp/errors'
+require 'thtp/status'
+require 'thtp/utils'
 
-module ThriftHttp
-  # A ThriftHttp middleware stack terminator, telling clients they've done
+module THTP
+  # A THTP middleware stack terminator, telling clients they've done
   # something wrong if their requests weren't captured by a running server
   class NullRoute
     # if a request makes it here, it's bad; tell the caller what it should have done

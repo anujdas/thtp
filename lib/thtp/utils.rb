@@ -1,8 +1,8 @@
 require 'thrift'
 
-require 'thrift_http/errors'
+require 'thtp/errors'
 
-module ThriftHttp
+module THTP
   # Methods for interacting with generated Thrift files
   module Utils
     extend self

@@ -1,7 +1,7 @@
 require 'thrift'
-require 'thrift_http/errors'
+require 'thtp/errors'
 
-module ThriftHttp
+module THTP
   class Client
     module Middleware
       # Raise Thrift validation issues as their own detectable error type, rather

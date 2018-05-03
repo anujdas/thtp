@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
 require 'thrift'
-require 'thrift_http/errors'
-require 'thrift_http/utils'
+require 'thtp/errors'
+require 'thtp/utils'
 
-module ThriftHttp
+module THTP
   class Server
     module Instrumentation
-      # A ThriftHttp::Server Server subscriber for RPC metrics reporting
+      # A THTP::Server Server subscriber for RPC metrics reporting
       class Metrics
         include Utils
 
@@ -51,7 +51,7 @@ module ThriftHttp
         # @param request [Rack::Request] The inbound HTTP request
         # @param rpc [Symbol] The name of the RPC
         # @param args [Thrift::Struct] The deserialized thrift args
-        # @param error [ThriftHttp::ServerError] The to-be-serialized exception
+        # @param error [THTP::ServerError] The to-be-serialized exception
         # @param time [Integer] Milliseconds of execution wall time
         def rpc_error(request:, rpc:, args:, error:, time:)
           tags = ["rpc:#{rpc}", ERROR_TAG, "rpc.error:#{canonical_name(error.class)}"]
@@ -68,7 +68,7 @@ module ThriftHttp
         end
       end
 
-      # A ThriftHttp::Server subscriber for RPC logging and exception recording
+      # A THTP::Server subscriber for RPC logging and exception recording
       class Logging
         include Utils
 
@@ -117,7 +117,7 @@ module ThriftHttp
         # @param request [Rack::Request] The inbound HTTP request
         # @param rpc [Symbol] The name of the RPC
         # @param args [Thrift::Struct] The deserialized thrift args
-        # @param error [ThriftHttp::ServerError] The to-be-serialized exception
+        # @param error [THTP::ServerError] The to-be-serialized exception
         # @param time [Integer] Milliseconds of execution wall time
         def rpc_error(request:, rpc:, args:, error:, time:)
           @logger.error :rpc do
@@ -201,7 +201,7 @@ module ThriftHttp
         # @param request [Rack::Request] The inbound HTTP request
         # @param rpc [Symbol] The name of the RPC
         # @param args [Thrift::Struct] The deserialized thrift args
-        # @param error [ThriftHttp::ServerError] The to-be-serialized exception
+        # @param error [THTP::ServerError] The to-be-serialized exception
         # @param time [Integer] Milliseconds of execution wall time
         def rpc_error(request:, rpc:, args:, error:, time:)
           @raven.capture_exception(error, **rpc_context(request, rpc, args))

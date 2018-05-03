@@ -3,16 +3,16 @@
 require 'httpclient'
 require 'thrift'
 
-require 'thrift_http/encoding'
-require 'thrift_http/errors'
-require 'thrift_http/middleware_stack'
-require 'thrift_http/status'
-require 'thrift_http/utils'
+require 'thtp/encoding'
+require 'thtp/errors'
+require 'thtp/middleware_stack'
+require 'thtp/status'
+require 'thtp/utils'
 
-require 'thrift_http/client/instrumentation'
-require 'thrift_http/client/middleware'
+require 'thtp/client/instrumentation'
+require 'thtp/client/middleware'
 
-module ThriftHttp
+module THTP
   # A thrift-over-HTTP client library implementing persistent connections and
   # extensibility via middlewares
   class Client

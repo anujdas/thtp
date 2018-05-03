@@ -1,4 +1,4 @@
-module ThriftHttp
+module THTP
   # These HTTP status codes correspond to Thrift::MessageTypes, which tell
   # clients what kind of message body to expect.
   module Status

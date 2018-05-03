@@ -1,4 +1,4 @@
-module ThriftHttp
+module THTP
   # A truly trivial pub/sub implementation for instrumentation. Note, NOT
   # threadsafe; make sure all subscribers are added before publishing anything.
   module PubSub

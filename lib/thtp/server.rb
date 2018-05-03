@@ -1,18 +1,18 @@
 require 'rack'
 require 'thrift'
 
-require 'thrift_http/encoding'
-require 'thrift_http/errors'
-require 'thrift_http/middleware_stack'
-require 'thrift_http/pub_sub'
-require 'thrift_http/status'
-require 'thrift_http/utils'
+require 'thtp/encoding'
+require 'thtp/errors'
+require 'thtp/middleware_stack'
+require 'thtp/pub_sub'
+require 'thtp/status'
+require 'thtp/utils'
 
-require 'thrift_http/server/instrumentation'
-require 'thrift_http/server/middleware'
-require 'thrift_http/server/null_route'
+require 'thtp/server/instrumentation'
+require 'thtp/server/middleware'
+require 'thtp/server/null_route'
 
-module ThriftHttp
+module THTP
   # An HTTP (Rack middleware) implementation of Thrift-RPC
   class Server
     include PubSub

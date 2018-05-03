@@ -1,7 +1,7 @@
 require 'thrift'
 
-module ThriftHttp
-  # Parent class of all ThriftHttp errors
+module THTP
+  # Parent class of all THTP errors
   class Error < StandardError; end
 
   # parent class for all errors during RPC execution;

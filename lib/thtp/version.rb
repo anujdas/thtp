@@ -1,3 +1,3 @@
-module ThriftHttp
+module THTP
   VERSION = '0.1.0'
 end

@@ -1,17 +1,17 @@
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
-require 'thrift_http/version'
+require 'thtp/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'thrift_http'
-  spec.version       = ThriftHttp::VERSION
+  spec.name          = 'thtp'
+  spec.version       = THTP::VERSION
   spec.authors       = ['Anuj Das']
   spec.email         = ['anujdas@gmail.com']
 
   spec.summary       = %q{It's alive}
   spec.description   = %q{or is it?}
-  spec.homepage      = 'https://github.com/anujdas/thrift_http'
+  spec.homepage      = 'https://github.com/anujdas/thtp'
   spec.license       = 'MIT'
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'

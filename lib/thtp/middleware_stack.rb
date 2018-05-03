@@ -1,6 +1,6 @@
-require 'thrift_http/utils'
+require 'thtp/utils'
 
-module ThriftHttp
+module THTP
   # An implementation of the middleware pattern (a la Rack) for RPC handling.
   # Extracts RPCs from a Thrift service and passes requests to a handler via
   # a middleware stack. Note, NOT threadsafe -- mount all desired middlewares

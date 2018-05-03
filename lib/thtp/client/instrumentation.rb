@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'thrift_http/utils'
+require 'thtp/utils'
 
-module ThriftHttp
+module THTP
   class Client
     module Instrumentation
-      # Automagic instrumentation for all outbound RPCs as a ThriftHttp::Client middleware
+      # Automagic instrumentation for all outbound RPCs as a THTP::Client middleware
       class Metrics
         OUTBOUND_RPC_STAT = 'rpc.outgoing'
 

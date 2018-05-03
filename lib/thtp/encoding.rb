@@ -1,6 +1,6 @@
 require 'thrift'
 
-module ThriftHttp
+module THTP
   # Handling of registered MIME types and protocols
   module Encoding
     BINARY = 'application/vnd.apache.thrift.binary'.freeze
