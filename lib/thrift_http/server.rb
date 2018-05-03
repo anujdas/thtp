@@ -15,8 +15,6 @@ module ThriftHttp
     include PubSub
     include Utils
 
-    RPC_ROUTE = %r{^/(?<service_name>[^/]+)/(?<rpc>[^/]+)/?$}
-
     attr_reader :service
 
     # @param app [Object?] The Rack application underneath, if used as middleware
@@ -26,6 +24,7 @@ module ThriftHttp
       @app = app
       @service = service
       @handler = MiddlewareStack.new(service, handlers)
+      @route = %r{^/#{service_path(service)}/(?<rpc>[^/]+)/?$}
     end
 
     # delegate to RPC handler stack
@@ -36,12 +35,12 @@ module ThriftHttp
     # Rack implementation entrypoint
     def call(rack_env)
       start_time = get_time
+      # verify routing
       request = Rack::Request.new(rack_env)
-      # extract path params and verify routing
-      service_name, rpc = RPC_ROUTE.match(request.path_info)&.values_at(:service_name, :rpc)
-      return @app.call(rack_env) unless request.post? && service_name == service_path(service)
-      # default to CompactProtocol because we need a protocol with which to send back errors
       protocol = Encoding.protocol(request.media_type) || Thrift::CompactProtocol
+      return @app.call(rack_env) unless request.post? && @route.match(request.path_info)
+      # get RPC name from route
+      rpc = Regexp.last_match[:rpc]
       raise UnknownRpcError, rpc unless @handler.respond_to?(rpc)
       # read, perform, write
       args = read_args(request.body, rpc, protocol)
