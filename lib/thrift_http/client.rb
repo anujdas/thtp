@@ -9,6 +9,9 @@ require 'thrift_http/middleware_stack'
 require 'thrift_http/status'
 require 'thrift_http/utils'
 
+require 'thrift_http/client/instrumentation'
+require 'thrift_http/client/middleware'
+
 module ThriftHttp
   # A thrift-over-HTTP client library implementing persistent connections and
   # extensibility via middlewares

@@ -7,6 +7,9 @@ require 'thrift_http/middleware_stack'
 require 'thrift_http/pub_sub'
 require 'thrift_http/status'
 require 'thrift_http/utils'
+
+require 'thrift_http/server/instrumentation'
+require 'thrift_http/server/middleware'
 require 'thrift_http/server/null_route'
 
 module ThriftHttp
