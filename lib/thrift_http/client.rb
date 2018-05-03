@@ -94,7 +94,7 @@ module ThriftHttp
                    open_timeout: 1, rpc_timeout: 15, keep_alive: 15)
       # set up HTTP connection -- note, this is persistent per-thread
       uri_class = ssl ? URI::HTTPS : URI::HTTP
-      base_url = uri_class.build(host: host, port: port, path: "/#{service_path(service)}/")
+      base_url = uri_class.build(host: host, port: port, path: "/#{canonical_name(service)}/")
       connection = HTTPClient.new(
         base_url: base_url,
         agent_name: self.class.name,

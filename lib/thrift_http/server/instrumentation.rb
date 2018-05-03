@@ -9,6 +9,8 @@ module ThriftHttp
     module Instrumentation
       # A ThriftHttp::Server Server subscriber for RPC metrics reporting
       class Metrics
+        include Utils
+
         INBOUND_RPC_STAT = 'rpc.incoming'
 
         SUCCESS_TAG = 'rpc.status:success' # everything is ok
@@ -41,7 +43,7 @@ module ThriftHttp
         # @param exception [Thrift::Struct] The to-be-serialized thrift exception
         # @param time [Integer] Milliseconds of execution wall time
         def rpc_exception(request:, rpc:, args:, exception:, time:)
-          tags = ["rpc:#{rpc}", EXCEPTION_TAG, "rpc.error:#{exception.class.name.underscore}"]
+          tags = ["rpc:#{rpc}", EXCEPTION_TAG, "rpc.error:#{canonical_name(exception.class)}"]
           @statsd.timing(INBOUND_RPC_STAT, time, tags: tags)
         end
 
@@ -52,7 +54,7 @@ module ThriftHttp
         # @param error [ThriftHttp::ServerError] The to-be-serialized exception
         # @param time [Integer] Milliseconds of execution wall time
         def rpc_error(request:, rpc:, args:, error:, time:)
-          tags = ["rpc:#{rpc}", ERROR_TAG, "rpc.error:#{error.class.name.underscore}"]
+          tags = ["rpc:#{rpc}", ERROR_TAG, "rpc.error:#{canonical_name(error.class)}"]
           @statsd.timing(INBOUND_RPC_STAT, time, tags: tags)
         end
 
@@ -61,7 +63,7 @@ module ThriftHttp
         # @param error [Exception] The to-be-serialized exception
         # @param time [Integer] Milliseconds of execution wall time
         def internal_error(request:, error:, time:)
-          tags = [INTERNAL_ERROR_TAG, "rpc.error:#{error.class.name.underscore}"]
+          tags = [INTERNAL_ERROR_TAG, "rpc.error:#{canonical_name(error.class)}"]
           @statsd.timing(INBOUND_RPC_STAT, time, tags: tags)
         end
       end
@@ -167,21 +169,24 @@ module ThriftHttp
           when nil
             nil # nulls are ok in ELK land
           when Array
-            { list: { result.first.class.name => jsonify(result) } }
+            { list: { canonical_name(result.first.class) => jsonify(result) } }
           when Set
-            { set: { result.first.class.name => jsonify(result) } }
+            { set: { canonical_name(result.first.class) => jsonify(result) } }
           when Hash
-            ktype, vtype = result.first.map { |obj| obj.class.name }
+            ktype, vtype = result.first.map { |obj| canonical_name(obj.class) }
             { hash: { ktype => { vtype => jsonify(result) } } }
+          when StandardError
+            error_to_hash(result, backtrace: false)
           else # primitives
-            { result.class.name => jsonify(result) }
+            { canonical_name(result.class) => jsonify(result) }
           end
         end
 
         # converts non-schema errors to an ELK-compatible format (JSON-serialisable hash)
-        def error_to_hash(error)
-          trace = error.backtrace.first(@backtrace_lines)
-          { error.class.name => jsonify(error).merge(backtrace: trace) }
+        def error_to_hash(error, backtrace: true)
+          error_info = { message: error.message, repr: error.inspect }
+          error_info[:backtrace] = error.backtrace.first(@backtrace_lines) if backtrace
+          { canonical_name(error.class) => error_info }
         end
       end
 
@@ -199,7 +204,7 @@ module ThriftHttp
         # @param error [ThriftHttp::ServerError] The to-be-serialized exception
         # @param time [Integer] Milliseconds of execution wall time
         def rpc_error(request:, rpc:, args:, error:, time:)
-          @raven.capture_exception(exception, **rpc_context(request, rpc, args))
+          @raven.capture_exception(error, **rpc_context(request, rpc, args))
         end
 
         # An unknown error occurred
@@ -207,7 +212,7 @@ module ThriftHttp
         # @param error [Exception] The to-be-serialized exception
         # @param time [Integer] Milliseconds of execution wall time
         def internal_error(request:, error:, time:)
-          @raven.capture_exception(exception, **http_context(request))
+          @raven.capture_exception(error, **http_context(request))
         end
 
         private

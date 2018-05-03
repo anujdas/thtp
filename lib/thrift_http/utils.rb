@@ -20,13 +20,6 @@ module ThriftHttp
       ((get_time - start_time) * 1000).round
     end
 
-    ### Routing
-
-    # MyServices::Thing::ThingService -> my_services.thing.thing_service
-    def service_path(service)
-      service.name.underscore.tr('/', '.')
-    end
-
     ### Thrift definition hacks
 
     # @return array<Symbol> for a given thrift Service using reflection
@@ -90,7 +83,16 @@ module ThriftHttp
       serialize(base_struct, Thrift::IOStreamTransport.new(nil, out_stream), protocol)
     end
 
-    # JSON serialisation
+    # String and object transforms
+
+    # Used to turn classes to canonical strings for routing and logging, e.g.,
+    # - MyServices::Thing::ThingService -> my_services.thing.thing_service
+    # - MyServices::Thing::ThingRequest -> my_services.thing.thing_request
+    # - MyServices::Thing::BadException -> my_services.thing.bad_exception
+    # @param klass [Class]
+    def canonical_name(klass)
+      klass.name.underscore.tr('/', '.')
+    end
 
     # Recursive object serialiser compatible with anything likely to appear
     # in Thrift, in case ActiveSupport's #as_json monkeypatch is unavailable

@@ -24,7 +24,7 @@ module ThriftHttp
       @app = app
       @service = service
       @handler = MiddlewareStack.new(service, handlers)
-      @route = %r{^/#{service_path(service)}/(?<rpc>[^/]+)/?$}
+      @route = %r{^/#{canonical_name(service)}/(?<rpc>[^/]+)/?$} # /:service/:rpc
     end
 
     # delegate to RPC handler stack
