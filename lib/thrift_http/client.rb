@@ -60,6 +60,8 @@ module ThriftHttp
         end
         # serialise and return bytestring
         serialize_buffer(args_struct, @protocol)
+      rescue Thrift::TypeError => e
+        raise ClientValidationError, e.message
       end
 
       def read_reply(rpc, reply, protocol)
