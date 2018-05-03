@@ -7,18 +7,14 @@ module THTP
   # parent class for all errors during RPC execution;
   # serializable as a Thrift::ApplicationException
   class ServerError < Error
-    attr_reader :type
-
-    # @param message [String]
-    # @param type [Thrift::ApplicationExceptionType?]
-    def initialize(message, type = Thrift::ApplicationException::UNKNOWN)
-      super(message)
-      @type = type
+    # @return [Thrift::ApplicationExceptionType]
+    def self.type
+      Thrift::ApplicationException::UNKNOWN
     end
 
     # @return [Thrift::ApplicationException] a serialisable Thrift exception
     def to_thrift
-      Thrift::ApplicationException.new(type, message)
+      Thrift::ApplicationException.new(self.class.type, message)
     end
   end
 
@@ -27,33 +23,47 @@ module THTP
 
   # Indicates an unrecognised or inappropriate RPC request format
   class BadRequestError < ServerError
+    def self.type
+      Thrift::ApplicationException::UNKNOWN_METHOD
+    end
+
     def initialize
-      super 'Calls must be made as POSTs to /:service/:rpc',
-        Thrift::ApplicationException::UNKNOWN_METHOD
+      super 'Calls must be made as POSTs to /:service/:rpc'
     end
   end
 
   # Indicates a well-formatted request for an RPC that does not exist
   class UnknownRpcError < ServerError
+    def self.type
+      Thrift::ApplicationException::WRONG_METHOD_NAME
+    end
+
     # @param rpc [String] the RPC requested
     def initialize(rpc)
-      super "Unknown RPC '#{rpc}'", Thrift::ApplicationException::WRONG_METHOD_NAME
+      super "Unknown RPC '#{rpc}'"
     end
   end
 
   # We don't recognise the response (client & server schemas don't match, or it's just invalid)
   class BadResponseError < ServerError
+    def self.type
+      Thrift::ApplicationException::MISSING_RESULT
+    end
+
     def initialize(rpc, response = nil)
-      super "#{rpc} failed: unknown result#{": '#{response.inspect}'" if response}",
-        Thrift::ApplicationException::MISSING_RESULT
+      super "#{rpc} failed: unknown result#{": '#{response.inspect}'" if response}"
     end
   end
 
   # Indicates a failure to turn a value into Thrift bytes according to schema
   class SerializationError < ServerError
+    def self.type
+      Thrift::ApplicationException::PROTOCOL_ERROR
+    end
+
     # @param error [StandardError] the exception encountered while serialising
     def initialize(error)
-      super friendly_message(error), Thrift::ApplicationException::PROTOCOL_ERROR
+      super friendly_message(error)
     end
 
     private
@@ -93,18 +103,24 @@ module THTP
   # Indicates an uncategorised exception -- an error unrelated to Thrift,
   # somewhere in application code.
   class InternalError < ServerError
+    def self.type
+      Thrift::ApplicationException::INTERNAL_ERROR
+    end
+
     # @param error [StandardError]
     def initialize(error)
-      super "Internal error (#{error.class}): #{error.message}",
-        Thrift::ApplicationException::INTERNAL_ERROR
+      super "Internal error (#{error.class}): #{error.message}"
     end
   end
 
   # Indicates an unexpected and unknown message type (HTTP status)
   class UnknownMessageType < ClientError
+    def self.type
+      Thrift::ApplicationException::INVALID_MESSAGE_TYPE
+    end
+
     def initialize(rpc, status, message)
-      super "#{rpc} returned unknown response code #{status}: #{message}",
-            Thrift::ApplicationException::INVALID_MESSAGE_TYPE
+      super "#{rpc} returned unknown response code #{status}: #{message}"
     end
   end
 
