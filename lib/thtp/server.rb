@@ -4,12 +4,12 @@ require 'thrift'
 require 'thtp/encoding'
 require 'thtp/errors'
 require 'thtp/middleware_stack'
-require 'thtp/pub_sub'
 require 'thtp/status'
 require 'thtp/utils'
 
 require 'thtp/server/instrumentation'
 require 'thtp/server/middleware'
+require 'thtp/server/pub_sub'
 require 'thtp/server/null_route'
 
 module THTP
