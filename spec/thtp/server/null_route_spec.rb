@@ -7,7 +7,7 @@ RSpec.describe THTP::NullRoute do
     post '/test/route'
 
     expect(last_response).to_not be_ok
-    expect(last_response).to be_thrift_error(THTP::BadRequestError)
+    expect(last_response).to be_thrift_error_response(THTP::BadRequestError)
   end
 
   it 'defaults to CompactProtocol' do
