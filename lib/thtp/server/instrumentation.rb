@@ -50,7 +50,7 @@ module THTP
         # Handler raised an unexpected error
         # @param request [Rack::Request] The inbound HTTP request
         # @param rpc [Symbol] The name of the RPC
-        # @param args [Thrift::Struct] The deserialized thrift args
+        # @param args [Thrift::Struct?] The deserialized thrift args
         # @param error [THTP::ServerError] The to-be-serialized exception
         # @param time [Integer] Milliseconds of execution wall time
         def rpc_error(request:, rpc:, args:, error:, time:)
@@ -116,7 +116,7 @@ module THTP
         # Handler raised an unexpected error
         # @param request [Rack::Request] The inbound HTTP request
         # @param rpc [Symbol] The name of the RPC
-        # @param args [Thrift::Struct] The deserialized thrift args
+        # @param args [Thrift::Struct?] The deserialized thrift args
         # @param error [THTP::ServerError] The to-be-serialized exception
         # @param time [Integer] Milliseconds of execution wall time
         def rpc_error(request:, rpc:, args:, error:, time:)
@@ -200,7 +200,7 @@ module THTP
         # Handler raised an unexpected error
         # @param request [Rack::Request] The inbound HTTP request
         # @param rpc [Symbol] The name of the RPC
-        # @param args [Thrift::Struct] The deserialized thrift args
+        # @param args [Thrift::Struct?] The deserialized thrift args
         # @param error [THTP::ServerError] The to-be-serialized exception
         # @param time [Integer] Milliseconds of execution wall time
         def rpc_error(request:, rpc:, args:, error:, time:)
@@ -230,7 +230,7 @@ module THTP
         # @param rack_request [Rack::Request] The inbound HTTP request
         # @param rpc [Symbol] The name of the RPC
         # @param args [Thrift::Struct] The deserialized thrift args
-        def rpc_context(rack_request, rpc, args) # rubocop:disable Lint/UnusedMethodArgument
+        def rpc_context(rack_request, rpc, _args)
           http_context(rack_request).tap do |context|
             context[:extra].merge!(rpc: rpc)
           end
