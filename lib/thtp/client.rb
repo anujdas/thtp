@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require 'httpclient'
+require 'connection_pool'
+require 'patron'
 require 'thrift'
 
 require 'thtp/encoding'
@@ -25,7 +26,7 @@ module THTP
       SUCCESS_FIELD = 'success' # the Thrift result field that's set if everything went fine
 
       # @param service [Class] The Thrift service whose schema to use for de/serialisation
-      # @parma connection [HTTPClient] The configured HTTP instance to POST over
+      # @parma connection [ConnectionPool<Patron::Session>] The configured HTTP client pool
       # @param protocol [Thrift::BaseProtocol] The default protocol with which to serialise
       def initialize(service, connection, protocol)
         @service = service
@@ -41,17 +42,17 @@ module THTP
 
       def post_rpc(rpc, *args)
         # send request over persistent HTTP connection
-        response = @connection.post(URI(rpc.to_s), body: write_call(rpc, args))
+        response = @connection.with { |c| c.post(rpc, write_call(rpc, args)) }
         # interpret HTTP status code to determine message type and deserialise appropriately
-        protocol = Encoding.protocol(response.contenttype) || @protocol
+        protocol = Encoding.protocol(response.headers['Content-Type']) || @protocol
         return read_reply(rpc, response.body, protocol) if response.status == Status::REPLY
         return read_exception(response.body, protocol) if response.status == Status::EXCEPTION
         # if the HTTP status code was unrecognised, report back
         raise UnknownMessageType, rpc, response.status, response.body
-      rescue Errno::ECONNREFUSED, HTTPClient::ConnectTimeoutError
-        raise ServerUnreachableError
-      rescue HTTPClient::ReceiveTimeoutError
+      rescue Patron::TimeoutError, Timeout::Error
         raise RpcTimeoutError, rpc
+      rescue Patron::Error
+        raise ServerUnreachableError
       end
 
       def write_call(rpc, args)
@@ -94,20 +95,20 @@ module THTP
     # @param service [Class] The Thrift service whose schema to use for de/serialisation
     def initialize(service, protocol: Thrift::CompactProtocol,
                    host: '0.0.0.0', port: nil, ssl: false,
-                   open_timeout: 1, rpc_timeout: 15, keep_alive: 15)
-      # set up HTTP connection -- note, this is persistent per-thread
+                   open_timeout: 1, rpc_timeout: 15,
+                   pool_size: 5, pool_timeout: 5)
       uri_class = ssl ? URI::HTTPS : URI::HTTP
-      base_url = uri_class.build(host: host, port: port, path: "/#{canonical_name(service)}/")
-      connection = HTTPClient.new(
-        base_url: base_url,
-        agent_name: self.class.name,
-        default_header: { 'Content-Type' => Encoding.content_type(protocol) },
-      ) do |client|
-        client.connect_timeout = open_timeout # seconds
-        client.receive_timeout = rpc_timeout # seconds
-        client.keep_alive_timeout = keep_alive # seconds
-        client.ssl_config.set_default_paths # use system certs rather than builtins
-        client.transparent_gzip_decompression = true
+      # set up HTTP connections in a thread-safe pool
+      connection = ConnectionPool.new(size: pool_size, timeout: pool_timeout) do
+        Patron::Session.new(
+          base_url: uri_class.build(host: host, port: port, path: "/#{canonical_name(service)}/"),
+          connect_timeout: open_timeout,
+          timeout: rpc_timeout,
+          headers: {
+            'Content-Type' => Encoding.content_type(protocol),
+            'User-Agent' => self.class.name,
+          },
+        )
       end
       # allow middleware insertion for purposes such as instrumentation or validation
       @stack = MiddlewareStack.new(service, Dispatcher.new(service, connection, protocol))

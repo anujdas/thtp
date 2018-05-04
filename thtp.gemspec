@@ -22,7 +22,8 @@ Gem::Specification.new do |spec|
   spec.test_files    = `git ls-files -z`.split("\x0").select { |f| f.match(%r{^spec/}) }
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'httpclient', '~> 2.8'
+  spec.add_dependency 'connection_pool', '~> 2.0'
+  spec.add_dependency 'patron', '~> 0.13'
   spec.add_dependency 'rack', '~> 2.0'
   spec.add_dependency 'thrift', '~> 0.9'
 
