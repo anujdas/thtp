@@ -18,6 +18,9 @@ module THTP
     include PubSub
     include Utils
 
+    THRIFT_IDENT = /[a-zA-Z_][\w.]*/
+    RPC_ROUTE = %r{^/(?<service>#{THRIFT_IDENT})/(?<rpc>#{THRIFT_IDENT})/?}
+
     attr_reader :service
 
     # @param app [Object?] The Rack application underneath, if used as middleware
@@ -27,7 +30,6 @@ module THTP
       @app = app
       @service = service
       @handler = MiddlewareStack.new(service, handlers)
-      @route = %r{^/#{canonical_name(service)}/(?<rpc>[^/]+)/?$} # /:service/:rpc
     end
 
     # delegate to RPC handler stack
@@ -36,16 +38,17 @@ module THTP
     end
 
     # Rack implementation entrypoint
-    def call(rack_env)
+    def call(env)
       start_time = get_time
+      set_rpc_attrs(env)
       # verify routing
-      request = Rack::Request.new(rack_env)
-      protocol = Encoding.protocol(request.media_type) || Thrift::CompactProtocol
-      return @app.call(rack_env) unless request.post? && @route.match(request.path_info)
+      return @app.call(env) unless canonical_name(service) == env['thtp.service']
       # get RPC name from route
-      rpc = Regexp.last_match[:rpc]
+      rpc = env['thtp.rpc']
       raise UnknownRpcError, rpc unless @handler.respond_to?(rpc)
       # read, perform, write
+      request = Rack::Request.new(env)
+      protocol = env['thtp.protocol']
       args = read_args(request.body, rpc, protocol)
       result = @handler.public_send(rpc, *args)
       write_reply(result, rpc, protocol).tap do
@@ -69,6 +72,15 @@ module THTP
     end
 
     private
+
+    def set_rpc_attrs(env)
+      content_type = env['HTTP_CONTENT_TYPE'].split(';').first
+      env['thtp.protocol'] = Encoding.protocol(content_type) || Thrift::CompactProtocol
+
+      return unless env['REQUEST_METHOD'] == 'POST' && (match = RPC_ROUTE.match(env['PATH_INFO']))
+      env['thtp.service'] = decanonicalise(match[:service])
+      env['thtp.rpc'] = match[:rpc]
+    end
 
     # fetches args from a request
     def read_args(request_body, rpc, protocol)

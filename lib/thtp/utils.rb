@@ -86,12 +86,17 @@ module THTP
     # String and object transforms
 
     # Used to turn classes to canonical strings for routing and logging, e.g.,
-    # - MyServices::Thing::ThingService -> my_services.thing.thing_service
-    # - MyServices::Thing::ThingRequest -> my_services.thing.thing_request
-    # - MyServices::Thing::BadException -> my_services.thing.bad_exception
+    # - MyServices::Thing::ThingService -> MyServices.Thing.ThingService
+    # - MyServices::Thing::ThingRequest -> MyServices.Thing.ThingRequest
+    # - MyServices::Thing::BadException -> MyServices.Thing.BadException
     # @param klass [Class]
     def canonical_name(klass)
-      klass.name.underscore.tr('/', '.')
+      klass.name.gsub('::', '.')
+    end
+
+    # @param canonical_name [String]
+    def decanonicalise(canonical_name)
+      canonical_name.gsub('.', '::')
     end
 
     # Recursive object serialiser compatible with anything likely to appear
