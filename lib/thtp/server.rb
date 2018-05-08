@@ -27,7 +27,7 @@ module THTP
       @app = app
       @service = service
       @handler = MiddlewareStack.new(service, handlers)
-      @route = %r{^/#{canonical_name(service)}/(?<rpc>[^/]+)/?$} # /:service/:rpc
+      @route = %r{^/#{canonical_name(service)}/(?<rpc>[\w.]+)/?$} # /:service/:rpc
     end
 
     # delegate to RPC handler stack
