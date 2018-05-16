@@ -36,5 +36,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'webmock', '~> 3.4'
 
   # optional dependencies
-  spec.add_development_dependency 'thrift-validator'
+  spec.add_development_dependency 'anujdas-thrift-validator', '~> 0.2'
 end
