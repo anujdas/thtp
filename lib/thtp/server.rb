@@ -40,7 +40,7 @@ module THTP
       start_time = get_time
       # verify routing
       request = Rack::Request.new(rack_env)
-      protocol = Encoding.protocol(request.media_type) || Thrift::CompactProtocol
+      protocol = Encoding.protocol(request.media_type) || Thrift::JsonProtocol
       return @app.call(rack_env) unless request.post? && @route.match(request.path_info)
       # get RPC name from route
       rpc = Regexp.last_match[:rpc]
