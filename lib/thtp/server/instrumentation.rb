@@ -72,7 +72,7 @@ module THTP
       class Logging
         include Utils
 
-        def initialize(logger, backtrace_lines: 5)
+        def initialize(logger, backtrace_lines: 10)
           @logger = logger
           @backtrace_lines = backtrace_lines
         end
