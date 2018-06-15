@@ -85,11 +85,17 @@ module THTP
       result_struct = result_class(service, rpc).new
       # void return types have no spot in the result struct
       unless reply.nil?
-        # test whether reply is part of RPC schmea definition
-        field = result_struct.struct_fields.values.find { |f| reply.instance_of?(f[:class]) }
-        raise BadResponseError, rpc, reply unless field
-        # if yes, return a result with the appropriate error field set
-        result_struct.public_send("#{field[:name]}=", reply)
+        if reply.is_a?(Thrift::Exception)
+          # detect the correct exception field, if it exists, and set its value
+          field = result_struct.struct_fields.values.find do |f|
+            f.key?(:class) && reply.instance_of?(f[:class])
+          end
+          raise BadResponseError, rpc, reply unless field
+          result_struct.public_send("#{field[:name]}=", reply)
+        else
+          # if it's not an exception, it must be the "success" value
+          result_struct.success = reply
+        end
       end
       # write to the response as a REPLY message
       [
