@@ -44,6 +44,20 @@ module THTP
           ActiveRecord::Base.connection_pool.with_connection { @app.call(rpc, *rpc_args_and_opts) }
         end
       end
+
+      # Instruments RPCs for Skylight; requires Skylight to be initialised properly elsewhere
+      class Skylight
+        def initialize(app)
+          require 'skylight'
+          @app = app
+        end
+
+        def call(rpc, *rpc_args_and_opts)
+          ::Skylight.trace(rpc, 'rpc') do
+            @app.call(rpc, *rpc_args_and_opts)
+          end
+        end
+      end
     end
   end
 end
