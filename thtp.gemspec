@@ -9,14 +9,10 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Anuj Das']
   spec.email         = ['anujdas@gmail.com']
 
-  spec.summary       = %q{It's alive}
-  spec.description   = %q{or is it?}
+  spec.summary       = %q{Thrift-RPC for HTTP}
+  spec.description   = %q{A client/server implementation of THTP: Thrift-RPC over HTTP as a Rack app}
   spec.homepage      = 'https://github.com/anujdas/thtp'
   spec.license       = 'MIT'
-
-  # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
-  # to allow pushing to a single host or delete this section to allow pushing to any host.
-  spec.metadata['allowed_push_host'] = "TODO: Set to 'http://mygemserver.com'"
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^spec/}) }
   spec.test_files    = `git ls-files -z`.split("\x0").select { |f| f.match(%r{^spec/}) }
